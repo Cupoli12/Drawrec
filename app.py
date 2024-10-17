@@ -6,7 +6,6 @@ import openai
 import tensorflow as tf
 from PIL import Image, ImageOps
 import numpy as np
-import time
 from streamlit_drawable_canvas import st_canvas
 
 Expert = " "
@@ -20,7 +19,7 @@ def encode_image_to_base64(image_path):
     except FileNotFoundError:
         return "Error: La imagen no se encontró en la ruta especificada."
 
-# Set custom page config
+# Set creative page config
 st.set_page_config(page_title='Tablero Inteligente', page_icon="🧠")
 
 # Add creative style
@@ -32,15 +31,20 @@ st.markdown("""
         }
         h1, h2, h3 {
             color: #0d47a1;
-        }
-        .timer {
-            font-size: 28px;
-            color: #d32f2f;
-            font-weight: bold;
+            text-shadow: 2px 2px 5px #64b5f6;
         }
         .stButton>button {
-            background-color: #64b5f6;
+            background-color: #42a5f5;
             color: white;
+            border-radius: 12px;
+            padding: 10px 20px;
+        }
+        .stTextInput>div>input {
+            border: 2px solid #64b5f6;
+            border-radius: 8px;
+        }
+        .stCanvas {
+            border: 4px dashed #42a5f5;
             border-radius: 10px;
         }
     </style>
@@ -54,15 +58,19 @@ with st.sidebar:
     st.info("En esta aplicación, veremos cómo una máquina puede interpretar un boceto.")
 st.subheader("Dibuja el boceto en el panel y presiona el botón para analizarlo")
 
+# Add color switcher to the sidebar
+color_choice = st.sidebar.selectbox('Selecciona el color para dibujar', ['Negro', 'Verde', 'Azul', 'Rojo'])
+color_map = {'Negro': '#000000', 'Verde': '#008000', 'Azul': '#0000FF', 'Rojo': '#FF0000'}
+stroke_color = color_map[color_choice]
+
 # Add canvas component
 drawing_mode = "freedraw"
 stroke_width = st.sidebar.slider('Selecciona el ancho de línea', 1, 30, 5)
-stroke_color = "#000000"
 bg_color = '#FFFFFF'
 
 # Create canvas component
 canvas_result = st_canvas(
-    fill_color="rgba(255, 165, 0, 0.3)",
+    fill_color="rgba(255, 165, 0, 0.3)",  # Transparent orange fill
     stroke_width=stroke_width,
     stroke_color=stroke_color,
     background_color=bg_color,
@@ -71,24 +79,6 @@ canvas_result = st_canvas(
     drawing_mode=drawing_mode,
     key="canvas",
 )
-
-# Add timer
-start_time = time.time()
-timer_placeholder = st.empty()
-
-def update_timer():
-    elapsed_time = time.time() - start_time
-    remaining_time = max(0, 15 - elapsed_time)
-    timer_placeholder.markdown(f"<div class='timer'>Tiempo restante: {remaining_time:.0f}s</div>", unsafe_allow_html=True)
-    return remaining_time
-
-# Start timer when drawing begins
-if canvas_result.image_data is not None:
-    while update_timer() > 0:
-        time.sleep(1)
-    
-    if update_timer() == 0:
-        st.error("⏰ ¡Se acabó el tiempo! Intenta de nuevo.")
 
 # OpenAI API Key input
 ke = st.text_input('Ingresa tu Clave', type="password")
@@ -157,3 +147,4 @@ if canvas_result.image_data is not None and api_key and analyze_button:
 else:
     if not api_key:
         st.warning("Por favor ingresa tu API key.")
+
